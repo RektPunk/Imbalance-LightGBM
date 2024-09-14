@@ -49,6 +49,3 @@ def train(
 
 
 train.__doc__ = modify_docstring(lgb.train.__doc__)
-
-if __name__ == "__main__":
-    print(train.__doc__)
