@@ -1,1 +1,1 @@
-# imlightgbm
+# imbalanced-lightgbm
