@@ -1,8 +1,15 @@
+from functools import partial
 from typing import Any, Callable, Literal
 
 import lightgbm as lgb
 from sklearn.utils.multiclass import type_of_target
 
+from imlightgbm.objective import (
+    binary_focal_eval,
+    binary_focal_objective,
+    multiclass_focal_eval,
+    multiclass_focal_objective,
+)
 from imlightgbm.utils import logger, modify_docstring
 
 
@@ -22,15 +29,34 @@ def train(
         logger.warning("'objective' exists in params will not used.")
         params.pop("objective")
 
-    inferred_type = type_of_target(train_set.get_label())
-    if inferred_type not in {"binary", "multiclass"}:
+    params.setdefault("alpha", 0.05)
+    params.setdefault("gamma", 0.01)
+
+    inferred_task = type_of_target(train_set.get_label())
+    if inferred_task not in {"binary", "multiclass"}:
         raise ValueError(
-            f"Invalid target type: {inferred_type}. Supported types are 'binary' or 'multiclass'."
+            f"Invalid target type: {inferred_task}. Supported types are 'binary' or 'multiclass'."
         )
 
-    # MAPPER # TODO
-    fobj = ...  # Focal eval function # TODO
-    feval = ...  # Focal objective function, # TODO
+    eval_mapper = {
+        "binary": partial(
+            binary_focal_eval, alpha=params["alpha"], gamma=params["gamma"]
+        ),
+        "multiclass": partial(
+            multiclass_focal_eval, alpha=params["alpha"], gamma=params["gamma"]
+        ),
+    }
+    objective_mapper = {
+        "binary": partial(
+            binary_focal_objective, alpha=params["alpha"], gamma=params["gamma"]
+        ),
+        "multiclass": partial(
+            multiclass_focal_objective, alpha=params["alpha"], gamma=params["gamma"]
+        ),
+    }
+
+    fobj = objective_mapper.get(inferred_task)
+    feval = eval_mapper.get(inferred_task)
     params.update({"objective": fobj})
 
     return lgb.train(
