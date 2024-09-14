@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 lightgbm = "^4.5.0"
+scikit-learn = "^1.5.2"
 
 
 [tool.poetry.group.dev.dependencies]
