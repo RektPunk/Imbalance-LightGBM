@@ -70,7 +70,7 @@ def set_params(
 ) -> tuple[dict[str, Any], EvalLike]:
     _params = deepcopy(params)
     if OBJECTIVE_STR in _params:
-        logger.warning("'objective' exists in params will not used.")
+        logger.warning(f"'{OBJECTIVE_STR}' exists in params will not used.")
         del _params[OBJECTIVE_STR]
 
     _alpha = _params.pop("alpha", ALPHA_DEFAULT)
