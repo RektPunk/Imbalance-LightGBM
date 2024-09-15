@@ -15,8 +15,8 @@ def _modify_docstring(docstring: str) -> str:
     return "\n".join(lines)
 
 
-def docstring(doc: str):
-    def decorator(func: Callable):
+def docstring(doc: str) -> Callable[[Callable], Callable]:
+    def decorator(func: Callable) -> Callable:
         func.__doc__ = _modify_docstring(doc)
         return func
 
