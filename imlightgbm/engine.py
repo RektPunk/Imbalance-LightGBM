@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from copy import deepcopy
 from typing import Any, Callable, Literal
 
 import lightgbm as lgb
@@ -22,18 +23,19 @@ def train(
     keep_training_booster: bool = False,
     callbacks: list[Callable] | None = None,
 ) -> lgb.Booster:
-    if "objective" in params:
+    _params = deepcopy(params)
+    if "objective" in _params:
         logger.warning("'objective' exists in params will not used.")
-        del params["objective"]
+        del _params["objective"]
 
-    _alpha = params.pop("alpha", 0.05)
-    _gamma = params.pop("gamma", 0.01)
+    _alpha = _params.pop("alpha", 0.05)
+    _gamma = _params.pop("gamma", 0.01)
 
     fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
-    params.update({"objective": fobj})
+    _params.update({"objective": fobj})
 
     return lgb.train(
-        params=params,
+        params=_params,
         train_set=train_set,
         valid_sets=valid_sets,
         valid_names=valid_names,
@@ -70,17 +72,18 @@ def cv(
     eval_train_metric: bool = False,
     return_cvbooster: bool = False,
 ) -> dict[str, list[float] | lgb.CVBooster]:
-    if "objective" in params:
+    _params = deepcopy(params)
+    if "objective" in _params:
         logger.warning("'objective' exists in params will not used.")
-        del params["objective"]
+        del _params["objective"]
 
-    _alpha = params.pop("alpha", 0.05)
-    _gamma = params.pop("gamma", 0.01)
+    _alpha = _params.pop("alpha", 0.05)
+    _gamma = _params.pop("gamma", 0.01)
 
     fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
-    params.update({"objective": fobj})
+    _params.update({"objective": fobj})
     return lgb.cv(
-        params=params,
+        params=_params,
         train_set=train_set,
         num_boost_round=num_boost_round,
         folds=folds,
