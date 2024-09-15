@@ -1,12 +1,18 @@
+from copy import deepcopy
 from functools import partial
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 from lightgbm import Dataset
 from sklearn.utils.multiclass import type_of_target
 
+from imlightgbm.utils import logger
+
 EvalLike = Callable[[np.ndarray, Dataset], tuple[str, float, bool]]
 ObjLike = Callable[[np.ndarray, Dataset], tuple[np.ndarray, np.ndarray]]
+ALPHA_DEFAULT: float = 0.05
+GAMMA_DEFAULT: float = 0.05
+OBJECTIVE_STR: str = "objective"
 
 
 def binary_focal_eval(
@@ -57,3 +63,19 @@ def set_fobj_feval(
     feval = eval_mapper[inferred_task]
 
     return fobj, feval
+
+
+def set_params(
+    params: dict[str, Any], train_set: Dataset
+) -> tuple[dict[str, Any], EvalLike]:
+    _params = deepcopy(params)
+    if OBJECTIVE_STR in _params:
+        logger.warning("'objective' exists in params will not used.")
+        del _params[OBJECTIVE_STR]
+
+    _alpha = _params.pop("alpha", ALPHA_DEFAULT)
+    _gamma = _params.pop("gamma", GAMMA_DEFAULT)
+
+    fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
+    _params.update({OBJECTIVE_STR: fobj})
+    return _params, feval

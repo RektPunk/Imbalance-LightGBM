@@ -1,13 +1,12 @@
 from collections.abc import Iterable
-from copy import deepcopy
 from typing import Any, Callable, Literal
 
 import lightgbm as lgb
 import numpy as np
 from sklearn.model_selection import BaseCrossValidator
 
-from imlightgbm.objective import set_fobj_feval
-from imlightgbm.utils import docstring, logger
+from imlightgbm.objective import set_params
+from imlightgbm.utils import docstring
 
 
 @docstring(lgb.train.__doc__)
@@ -23,17 +22,7 @@ def train(
     keep_training_booster: bool = False,
     callbacks: list[Callable] | None = None,
 ) -> lgb.Booster:
-    _params = deepcopy(params)
-    if "objective" in _params:
-        logger.warning("'objective' exists in params will not used.")
-        del _params["objective"]
-
-    _alpha = _params.pop("alpha", 0.05)
-    _gamma = _params.pop("gamma", 0.01)
-
-    fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
-    _params.update({"objective": fobj})
-
+    _params, feval = set_params(params=params, train_set=train_set)
     return lgb.train(
         params=_params,
         train_set=train_set,
@@ -72,16 +61,7 @@ def cv(
     eval_train_metric: bool = False,
     return_cvbooster: bool = False,
 ) -> dict[str, list[float] | lgb.CVBooster]:
-    _params = deepcopy(params)
-    if "objective" in _params:
-        logger.warning("'objective' exists in params will not used.")
-        del _params["objective"]
-
-    _alpha = _params.pop("alpha", 0.05)
-    _gamma = _params.pop("gamma", 0.01)
-
-    fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
-    _params.update({"objective": fobj})
+    _params, feval = set_params(params=params, train_set=train_set)
     return lgb.cv(
         params=_params,
         train_set=train_set,
@@ -91,7 +71,7 @@ def cv(
         stratified=stratified,
         shuffle=shuffle,
         metrics=metrics,
-        feavl=feval,
+        feval=feval,
         init_model=init_model,
         feature_name=feature_name,
         categorical_feature=categorical_feature,
