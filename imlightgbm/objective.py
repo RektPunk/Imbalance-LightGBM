@@ -17,28 +17,28 @@ OBJECTIVE_STR: str = "objective"
 
 def binary_focal_eval(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-):
+) -> tuple[str, float, bool]:
     is_higher_better = False
     return "binary_focal", ..., is_higher_better
 
 
 def binary_focal_objective(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-):
+) -> tuple[np.ndarray, np.ndarray]:
     # TODO
     return ...
 
 
 def multiclass_focal_eval(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-):
+) -> tuple[str, float, bool]:
     # TODO
     return
 
 
 def multiclass_focal_objective(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-):
+) -> tuple[np.ndarray, np.ndarray]:
     # TODO
     return
 
