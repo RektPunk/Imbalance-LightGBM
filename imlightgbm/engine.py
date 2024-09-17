@@ -22,13 +22,12 @@ def train(
     keep_training_booster: bool = False,
     callbacks: list[Callable] | None = None,
 ) -> lgb.Booster:
-    _params, feval = set_params(params=params, train_set=train_set)
+    _params = set_params(params=params, train_set=train_set)
     return lgb.train(
         params=_params,
         train_set=train_set,
         valid_sets=valid_sets,
         valid_names=valid_names,
-        feval=feval,
         num_boost_round=num_boost_round,
         init_model=init_model,
         feature_name=feature_name,
@@ -61,7 +60,7 @@ def cv(
     eval_train_metric: bool = False,
     return_cvbooster: bool = False,
 ) -> dict[str, list[float] | lgb.CVBooster]:
-    _params, feval = set_params(params=params, train_set=train_set)
+    _params = set_params(params=params, train_set=train_set)
     return lgb.cv(
         params=_params,
         train_set=train_set,
@@ -71,7 +70,6 @@ def cv(
         stratified=stratified,
         shuffle=shuffle,
         metrics=metrics,
-        feval=feval,
         init_model=init_model,
         feature_name=feature_name,
         categorical_feature=categorical_feature,
