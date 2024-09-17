@@ -17,22 +17,25 @@ IS_HIGHER_BETTER = False
 
 
 def _power(num_base: np.ndarray, num_pow: float):
+    """Safe power."""
     return np.sign(num_base) * (np.abs(num_base)) ** (num_pow)
 
 
 def _log(array: np.ndarray, is_prob: bool = False) -> np.ndarray:
+    """Safe log."""
     _upper = 1 if is_prob else None
     return np.log(np.clip(array, 1e-6, _upper))
 
 
 def _sigmoid(x: np.ndarray) -> np.ndarray:
-    """Convert raw predictions to probabilities in binary task"""
+    """Convert raw predictions to probabilities in binary task."""
     return 1 / (1 + np.exp(-x))
 
 
 def binary_focal_eval(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
 ) -> tuple[str, float, bool]:
+    """Return binary focal eval."""
     label = train_data.get_label()
     pred_prob = _sigmoid(pred)
     p_t = np.where(label == 1, pred_prob, 1 - pred_prob)
@@ -45,6 +48,7 @@ def binary_focal_eval(
 def binary_focal_objective(
     pred: np.ndarray, train_data: Dataset, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Return binary focal objective."""
     label = train_data.get_label()
     pred_prob = _sigmoid(pred)
 
@@ -79,9 +83,10 @@ def multiclass_focal_objective(
     return
 
 
-def set_fobj_feval(
+def _set_fobj_feval(
     train_set: Dataset, alpha: float, gamma: float
 ) -> tuple[ObjLike, EvalLike]:
+    """Return obj and eval with respect to task type."""
     inferred_task = type_of_target(train_set.get_label())
     if inferred_task not in {"binary", "multiclass"}:
         raise ValueError(
@@ -104,6 +109,7 @@ def set_fobj_feval(
 def set_params(
     params: dict[str, Any], train_set: Dataset
 ) -> tuple[dict[str, Any], EvalLike]:
+    """Set params and eval finction, objective in params."""
     _params = deepcopy(params)
     if OBJECTIVE_STR in _params:
         logger.warning(f"'{OBJECTIVE_STR}' exists in params will not used.")
@@ -112,6 +118,6 @@ def set_params(
     _alpha = _params.pop("alpha", ALPHA_DEFAULT)
     _gamma = _params.pop("gamma", GAMMA_DEFAULT)
 
-    fobj, feval = set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
+    fobj, feval = _set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
     _params.update({OBJECTIVE_STR: fobj})
     return _params, feval
