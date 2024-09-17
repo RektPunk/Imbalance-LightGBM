@@ -13,7 +13,8 @@ ObjLike = Callable[[np.ndarray, Dataset], tuple[np.ndarray, np.ndarray]]
 ALPHA_DEFAULT: float = 0.25
 GAMMA_DEFAULT: float = 2.0
 OBJECTIVE_STR: str = "objective"
-IS_HIGHER_BETTER = False
+METRIC_STR: str = "metric"
+IS_HIGHER_BETTER: bool = False
 
 
 def _power(num_base: np.ndarray, num_pow: float):
@@ -30,19 +31,6 @@ def _log(array: np.ndarray, is_prob: bool = False) -> np.ndarray:
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     """Convert raw predictions to probabilities in binary task."""
     return 1 / (1 + np.exp(-x))
-
-
-def binary_focal_eval(
-    pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-) -> tuple[str, float, bool]:
-    """Return binary focal eval."""
-    label = train_data.get_label()
-    pred_prob = _sigmoid(pred)
-    p_t = np.where(label == 1, pred_prob, 1 - pred_prob)
-    loss = -alpha * ((1 - p_t) ** gamma) * _log(p_t, True)
-
-    focal_loss = np.mean(loss)
-    return "focal", focal_loss, IS_HIGHER_BETTER
 
 
 def binary_focal_objective(
@@ -69,16 +57,29 @@ def binary_focal_objective(
     return grad, hess
 
 
-def multiclass_focal_eval(
+def binary_focal_eval(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
 ) -> tuple[str, float, bool]:
-    # TODO
-    return
+    """Return binary focal eval."""
+    label = train_data.get_label()
+    pred_prob = _sigmoid(pred)
+    p_t = np.where(label == 1, pred_prob, 1 - pred_prob)
+    loss = -alpha * ((1 - p_t) ** gamma) * _log(p_t, True)
+
+    focal_loss = np.mean(loss)
+    return "focal", focal_loss, IS_HIGHER_BETTER
 
 
 def multiclass_focal_objective(
     pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
+    # TODO
+    return
+
+
+def multiclass_focal_eval(
+    pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
+) -> tuple[str, float, bool]:
     # TODO
     return
 
@@ -97,8 +98,8 @@ def _set_fobj_feval(
         "multiclass": partial(multiclass_focal_objective, alpha=alpha, gamma=gamma),
     }
     eval_mapper: dict[str, EvalLike] = {
-        "binary": partial(binary_focal_eval, alpha=alpha, gamma=gamma),
-        "multiclass": partial(multiclass_focal_eval, alpha=alpha, gamma=gamma),
+        "binary": "binary_logloss",
+        "multiclass": "multi_logloss",
     }
     fobj = objective_mapper[inferred_task]
     feval = eval_mapper[inferred_task]
@@ -106,9 +107,7 @@ def _set_fobj_feval(
     return fobj, feval
 
 
-def set_params(
-    params: dict[str, Any], train_set: Dataset
-) -> tuple[dict[str, Any], EvalLike]:
+def set_params(params: dict[str, Any], train_set: Dataset) -> dict[str, Any]:
     """Set params and eval finction, objective in params."""
     _params = deepcopy(params)
     if OBJECTIVE_STR in _params:
@@ -119,5 +118,5 @@ def set_params(
     _gamma = _params.pop("gamma", GAMMA_DEFAULT)
 
     fobj, feval = _set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
-    _params.update({OBJECTIVE_STR: fobj})
-    return _params, feval
+    _params.update({OBJECTIVE_STR: fobj, METRIC_STR: feval})
+    return _params
