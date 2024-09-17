@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 lightgbm = "^4.5.0"
 scikit-learn = "^1.5.2"
+optuna = "^4.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
