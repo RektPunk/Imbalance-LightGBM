@@ -39,7 +39,7 @@ def binary_focal_eval(
     loss = -alpha * ((1 - p_t) ** gamma) * _log(p_t, True)
 
     focal_loss = np.mean(loss)
-    return "binary_focal", focal_loss, IS_HIGHER_BETTER
+    return "focal", focal_loss, IS_HIGHER_BETTER
 
 
 def binary_focal_objective(
