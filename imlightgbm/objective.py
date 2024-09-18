@@ -3,13 +3,9 @@ from functools import partial
 from typing import Any, Callable
 
 import numpy as np
-import optuna
 from lightgbm import Dataset
 from sklearn.utils.multiclass import type_of_target
 
-from imlightgbm.utils import logger
-
-EvalLike = Callable[[np.ndarray, Dataset], tuple[str, float, bool]]
 ObjLike = Callable[[np.ndarray, Dataset], tuple[np.ndarray, np.ndarray]]
 ALPHA_DEFAULT: float = 0.25
 GAMMA_DEFAULT: float = 2.0
@@ -37,7 +33,7 @@ def _sigmoid(x: np.ndarray) -> np.ndarray:
 def binary_focal_objective(
     pred: np.ndarray, train_data: Dataset, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return binary focal objective."""
+    """Return grad, hess for binary focal objective."""
     label = train_data.get_label()
     pred_prob = _sigmoid(pred)
 
@@ -58,17 +54,13 @@ def binary_focal_objective(
     return grad, hess
 
 
-def binary_focal_eval(
-    pred: np.ndarray, train_data: Dataset, alpha: float, gamma: float
-) -> tuple[str, float, bool]:
-    """Return binary focal eval."""
+def weighted_binary_cross_entropy(pred: np.ndarray, train_data: Dataset, alpha: float):
+    """Return grad, hess for binary focal objective."""
     label = train_data.get_label()
     pred_prob = _sigmoid(pred)
-    p_t = np.where(label == 1, pred_prob, 1 - pred_prob)
-    loss = -alpha * ((1 - p_t) ** gamma) * _log(p_t, True)
-
-    focal_loss = np.mean(loss)
-    return "focal", focal_loss, IS_HIGHER_BETTER
+    grad = -(alpha**label) * (label - pred_prob)
+    hess = (alpha**label) * pred_prob * (1.0 - pred_prob)
+    return grad, hess
 
 
 def multiclass_focal_objective(
@@ -86,24 +78,32 @@ def multiclass_focal_eval(
 
 
 def _set_fobj_feval(
-    train_set: Dataset, alpha: float, gamma: float
-) -> tuple[ObjLike, EvalLike]:
+    train_set: Dataset,
+    alpha: float,
+    gamma: float,
+    objective: str | None = None,
+    metric: str | None = None,
+) -> tuple[ObjLike, list[str]]:
     """Return obj and eval with respect to task type."""
     inferred_task = type_of_target(train_set.get_label())
-    if inferred_task not in {"binary", "multiclass"}:
+    if inferred_task not in {"binary"}:  # TODO: multiclass
         raise ValueError(
-            f"Invalid target type: {inferred_task}. Supported types are 'binary' or 'multiclass'."
+            f"Invalid target type: {inferred_task}. Supported types is 'binary'."
         )
-    objective_mapper: dict[str, ObjLike] = {
-        "binary": partial(binary_focal_objective, gamma=gamma),
-        "multiclass": partial(multiclass_focal_objective, alpha=alpha, gamma=gamma),
-    }
-    eval_mapper: dict[str, EvalLike] = {
-        "binary": "binary_logloss",
-        "multiclass": "multi_logloss",
-    }
-    fobj = objective_mapper[inferred_task]
-    feval = eval_mapper[inferred_task]
+
+    feval = metric if metric else "auc"
+    if objective:
+        if objective not in {"focal", "weighted"}:
+            raise ValueError(
+                f"Invalid objective: {objective}. Supported types is 'focal' and 'weighted'."
+            )
+        objective_mapper: dict[str, ObjLike] = {
+            "focal": partial(binary_focal_objective, gamma=gamma),
+            "weighted": partial(weighted_binary_cross_entropy, alpha=alpha),
+        }
+        fobj = objective_mapper[objective]
+    else:
+        fobj: ObjLike = partial(binary_focal_objective, gamma=gamma)
 
     return fobj, feval
 
@@ -111,26 +111,21 @@ def _set_fobj_feval(
 def set_params(params: dict[str, Any], train_set: Dataset) -> dict[str, Any]:
     """Set params and eval finction, objective in params."""
     _params = deepcopy(params)
-    if OBJECTIVE_STR in _params:
-        logger.warning(f"'{OBJECTIVE_STR}' exists in params will not used.")
-        del _params[OBJECTIVE_STR]
+    _objective = _params.pop(OBJECTIVE_STR, None)
+    _metric = _params.pop(METRIC_STR, None)
+
+    if _metric and not isinstance(_metric, str):
+        raise ValueError("metric must be str")
 
     _alpha = _params.pop("alpha", ALPHA_DEFAULT)
     _gamma = _params.pop("gamma", GAMMA_DEFAULT)
 
-    fobj, feval = _set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
+    fobj, feval = _set_fobj_feval(
+        train_set=train_set,
+        alpha=_alpha,
+        gamma=_gamma,
+        objective=_objective,
+        metric=_metric,
+    )
     _params.update({OBJECTIVE_STR: fobj, METRIC_STR: feval})
     return _params
-
-
-def get_params(trial: optuna.Trial) -> dict[str, Any]:
-    """Get default params."""
-    return {
-        "alpha": trial.suggest_float("alpha", 0.25, 0.75),
-        "gamma": trial.suggest_float("gamma", 0.0, 3.0),
-        "num_leaves": trial.suggest_int("num_leaves", 20, 150),
-        "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1),
-        "feature_fraction": trial.suggest_float("feature_fraction", 0.5, 1.0),
-        "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0),
-        "bagging_freq": trial.suggest_int("bagging_freq", 1, 7),
-    }
