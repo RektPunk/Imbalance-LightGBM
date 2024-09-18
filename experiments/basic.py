@@ -31,21 +31,33 @@ params_standard = {
     "early_stopping_rounds": 10,
 }
 
-# # Train standard LightGBM model
+# Train standard LightGBM model
 bst_standard = lgb.train(
     params_standard, train_data, num_boost_round=100, valid_sets=[test_data]
 )
 
+# Parameters for Imbalanced LightGBM model
+params_imbalanced = {
+    "objective": "weighted",  # focal
+    "metric": "binary_logloss",  # auc
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "seed": 42,
+    "early_stopping_rounds": 10,
+}
 
 bst_focal = imlgb.train(
-    params_standard, train_data, num_boost_round=100, valid_sets=[test_data]
+    params_imbalanced, train_data, num_boost_round=100, valid_sets=[test_data]
 )
 
-# Predict using the standard LightGBM model
+# Predict using standard LightGBM model
 y_pred_standard = bst_standard.predict(X_test)
 y_pred_standard_binary = (y_pred_standard > 0.5).astype(int)
 
-# Predict using the focal loss model
+# Predict using Imbalanced LightGBM model
 y_pred_focal = bst_focal.predict(X_test)
 y_pred_focal_binary = (y_pred_focal > 0.5).astype(int)
 
@@ -64,5 +76,3 @@ print(
 print(
     f"LightGBM with Focal Loss - Accuracy: {accuracy_focal:.4f}, Log Loss: {logloss_focal:.4f}, rocauc: {rocauc_focal:.4f}"
 )
-# Standard LightGBM - Accuracy: 0.9737, Log Loss: 0.1029, rocauc: 0.9931
-# LightGBM with Focal Loss - Accuracy: 0.8158, Log Loss: 0.6955, rocauc: 0.9843
