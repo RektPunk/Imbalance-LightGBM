@@ -1,2 +1,2 @@
 # ruff: noqa
-from imlightgbm.engine import cv, train
+from imlightgbm.engine import cv, optimize, train
