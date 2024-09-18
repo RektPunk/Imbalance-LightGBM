@@ -1,0 +1,20 @@
+name: Publish Python Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Publish module
+      uses: JRubics/poetry-publish@v2.0
+      with:
+        pypi_token: ${{ secrets.PYPI_TOKEN }}
+        poetry_install_options: "--without dev"
