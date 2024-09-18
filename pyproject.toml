@@ -11,7 +11,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.9"
 lightgbm = "^4.5.0"
 scikit-learn = "^1.5.2"
 
