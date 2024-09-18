@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any, Callable
 
 import numpy as np
+import optuna
 from lightgbm import Dataset
 from sklearn.utils.multiclass import type_of_target
 
@@ -120,3 +121,16 @@ def set_params(params: dict[str, Any], train_set: Dataset) -> dict[str, Any]:
     fobj, feval = _set_fobj_feval(train_set=train_set, alpha=_alpha, gamma=_gamma)
     _params.update({OBJECTIVE_STR: fobj, METRIC_STR: feval})
     return _params
+
+
+def get_params(trial: optuna.Trial) -> dict[str, Any]:
+    """Get default params."""
+    return {
+        "alpha": trial.suggest_float("alpha", 0.25, 0.75),
+        "gamma": trial.suggest_float("gamma", 0.0, 3.0),
+        "num_leaves": trial.suggest_int("num_leaves", 20, 150),
+        "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1),
+        "feature_fraction": trial.suggest_float("feature_fraction", 0.5, 1.0),
+        "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0),
+        "bagging_freq": trial.suggest_int("bagging_freq", 1, 7),
+    }
