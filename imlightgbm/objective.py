@@ -135,6 +135,11 @@ def _get_fobj_feval(
     """Return obj and eval with respect to task type."""
     _task = type_of_target(train_set.get_label())
     task_enum = SupportedTask.get(_task)
+    # FIXME: remove after developing multiclass objective
+    if task_enum != SupportedTask.binary:
+        raise ValueError(
+            "Inferred task is not binary. Multiclass classification will be supported starting from version 0.1.0."
+        )
     feval = _get_metric(task_enum=task_enum, metric=metric)
     fobj = _get_objective(
         task_enum=task_enum, objective=objective, alpha=alpha, gamma=gamma
