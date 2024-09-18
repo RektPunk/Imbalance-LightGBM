@@ -7,7 +7,6 @@ from sklearn.model_selection import BaseCrossValidator
 
 from imlightgbm.docstring import add_docstring
 from imlightgbm.objective import set_params
-from imlightgbm.utils import logger
 
 
 @add_docstring("train")
@@ -22,7 +21,6 @@ def train(
     callbacks: list[Callable] | None = None,
 ) -> lgb.Booster:
     _params = set_params(params=params, train_set=train_set)
-    logger.info("Parameter setting completed. Starting model training...")
     return lgb.train(
         params=_params,
         train_set=train_set,
@@ -56,7 +54,6 @@ def cv(
     return_cvbooster: bool = False,
 ) -> dict[str, list[float] | lgb.CVBooster]:
     _params = set_params(params=params, train_set=train_set)
-    logger.info("Parameter setting completed. Starting cross validation...")
     return lgb.cv(
         params=_params,
         train_set=train_set,
