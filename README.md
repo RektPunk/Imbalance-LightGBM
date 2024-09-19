@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-  <img src="https://capsule-render.vercel.app/api?type=transparent&fontColor=703ee5&text=imlightgbm&height=150&fontSize=60">
+  <img src="https://capsule-render.vercel.app/api?type=transparent&height=300&color=gradient&text=imlightgbm&fontColor=0047AB&section=header&reversal=false&desc=Imbalanced-LightGBM&descAlignY=67&fontSize=75">
 </div>
 <p align="center">
   <a href="https://github.com/RektPunk/Imbalance-LightGBM/releases/latest">
