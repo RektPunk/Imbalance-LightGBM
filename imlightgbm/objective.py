@@ -79,6 +79,16 @@ def multiclass_weighted_objective(
     return
 
 
+def _validate_positive_float(param: Any) -> None:
+    if not isinstance(param, int | float):
+        raise ValueError(
+            f"Expected a numeric type for parameter, but got {type(param).__name__}."
+        )
+
+    if param < 0:
+        raise ValueError(f"Expected a positive number for parameter, but got {param}.")
+
+
 def _get_metric(task_enum: SupportedTask, metric: str | None) -> str:
     """Retrieve the appropriate metric function based on task."""
     metric_mapper: dict[SupportedTask, list[Metric]] = {
@@ -156,10 +166,16 @@ def set_params(params: dict[str, Any], train_set: Dataset) -> dict[str, Any]:
     if _metric and not isinstance(_metric, str):
         raise ValueError("metric must be str")
 
+    _alpha = _params.pop("alpha", ALPHA_DEFAULT)
+    _gamma = _params.pop("gamma", GAMMA_DEFAULT)
+
+    _validate_positive_float(_alpha)
+    _validate_positive_float(_gamma)
+
     fobj, feval = _get_fobj_feval(
         train_set=train_set,
-        alpha=_params.pop("alpha", ALPHA_DEFAULT),
-        gamma=_params.pop("gamma", GAMMA_DEFAULT),
+        alpha=_alpha,
+        gamma=_gamma,
         objective=_objective,
         metric=_metric,
     )
