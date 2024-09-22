@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 from lightgbm import LGBMClassifier
@@ -38,7 +38,9 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
     ) -> None:
         self.alpha = alpha
         self.gamma = gamma
-        _OBJECTIVE_MAPPER = {
+        _OBJECTIVE_MAPPER: dict[
+            str, Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]
+        ] = {
             "binary_focal": lambda y_true, y_pred: sklearn_binary_focal_objective(
                 y_true, y_pred, gamma=gamma
             ),
