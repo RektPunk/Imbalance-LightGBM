@@ -95,7 +95,7 @@ _PARAMS_MAPPER: dict[str, tuple[str, str]] = {
 
 
 def add_docstring(func_name: str) -> Callable:
-    """Decorator to add a modified docstring to a function."""
+    """Decorator to add a docstring to a function."""
 
     def decorator(func: Callable) -> Callable:
         func.__doc__ = _PARAMS_MAPPER[func_name]
