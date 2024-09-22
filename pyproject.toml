@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "imlightgbm"
-version = "0.0.2"
+version = "0.0.3"
 description = "LightGBM for label-imbalanced data with focal and weighted loss function"
 authors = ["RektPunk <rektpunk@gmail.com>"]
 license = "MIT"
