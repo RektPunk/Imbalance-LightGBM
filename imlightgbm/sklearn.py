@@ -1,6 +1,7 @@
 from typing import Any, Callable
 
 import numpy as np
+import scipy
 from lightgbm.sklearn import LGBMClassifier, _LGBM_ScikitMatrixLike
 from scipy.special import expit
 
@@ -99,7 +100,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         pred_contrib: bool = False,
         validate_features: bool = False,
         **kwargs: Any,
-    ):
+    ) -> np.ndarray | scipy.sparse.spmatrix | list[scipy.sparse.spmatrix]:
         """Docstring is inherited from the LGBMClassifier."""
         result = super().predict(
             X=X,
