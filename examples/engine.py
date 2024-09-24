@@ -1,4 +1,5 @@
 import lightgbm as lgb
+from scipy.special import expit
 from sklearn.datasets import load_breast_cancer
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -58,7 +59,8 @@ y_pred_standard = bst_standard.predict(X_test)
 y_pred_standard_binary = (y_pred_standard > 0.5).astype(int)
 
 # Predict using Imbalanced LightGBM model
-y_pred_focal = bst_focal.predict(X_test)
+y_pred_focal_raw = bst_focal.predict(X_test)
+y_pred_focal = expit(y_pred_focal_raw)
 y_pred_focal_binary = (y_pred_focal > 0.5).astype(int)
 
 # Evaluate models
