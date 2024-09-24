@@ -1,16 +1,5 @@
 from typing import Callable
 
-
-def add_docstring(func_name: str) -> Callable:
-    """Decorator to add a docstring to a function."""
-
-    def decorator(func: Callable) -> Callable:
-        func.__doc__ = _PARAMS_MAPPER[func_name]
-        return func
-
-    return decorator
-
-
 _TRAIN_DOC = """Perform the training with given parameters.
 Parameters
 ----------
@@ -192,3 +181,13 @@ _PARAMS_MAPPER: dict[str, tuple[str, str]] = {
     "cv": _CV_DOC,
     "classifier": _CLASSIFIER_DOC,
 }
+
+
+def add_docstring(func_name: str) -> Callable:
+    """Decorator to add a docstring to a function."""
+
+    def decorator(func: Callable) -> Callable:
+        func.__doc__ = _PARAMS_MAPPER[func_name]
+        return func
+
+    return decorator
