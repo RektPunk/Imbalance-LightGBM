@@ -2,10 +2,10 @@ from typing import Any, Callable, Literal
 
 import numpy as np
 from lightgbm.sklearn import LGBMClassifier, _LGBM_ScikitMatrixLike
+from scipy.special import expit
 
 from imlightgbm.docstring import add_docstring
 from imlightgbm.objective import (
-    _sigmoid,
     sklearn_binary_focal_objective,
     sklearn_binary_weighted_objective,
 )
@@ -116,6 +116,6 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             class_index = np.argmax(result, axis=1)
             return self._LGBMClassifier_le.inverse_transform(class_index)
         else:
-            return _sigmoid(result)
+            return expit(result)
 
     predict.__doc__ = LGBMClassifier.predict.__doc__
