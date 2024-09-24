@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.model_selection import BaseCrossValidator
 
 from imlightgbm.docstring import add_docstring
-from imlightgbm.objective import set_params
+from imlightgbm.objective.engine import set_params
 
 
 @add_docstring("train")

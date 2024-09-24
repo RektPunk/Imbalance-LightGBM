@@ -1,16 +1,18 @@
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 import numpy as np
 from lightgbm.sklearn import LGBMClassifier, _LGBM_ScikitMatrixLike
 from scipy.special import expit
 
+from imlightgbm.base import ALPHA_DEFAULT, GAMMA_DEFAULT, Objective
 from imlightgbm.docstring import add_docstring
-from imlightgbm.objective import (
+from imlightgbm.objective.core import (
     sklearn_binary_focal_objective,
     sklearn_binary_weighted_objective,
 )
+from imlightgbm.utils import validate_positive_number
 
-_Objective = Literal["binary_focal", "binary_weighted"]
+_SklearnObjLike = Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]
 
 
 class ImbalancedLGBMClassifier(LGBMClassifier):
@@ -20,9 +22,9 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
     def __init__(
         self,
         *,
-        objective: _Objective,
-        alpha: float = 0.25,
-        gamma: float = 2.0,
+        objective: str,
+        alpha: float = ALPHA_DEFAULT,
+        gamma: float = GAMMA_DEFAULT,
         boosting_type: str = "gbdt",
         num_leaves: int = 31,
         max_depth: int = -1,
@@ -52,17 +54,17 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         gamma: float
         Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more other parameters.
         """
+        validate_positive_number(alpha)
+        validate_positive_number(gamma)
+
         self.alpha = alpha
         self.gamma = gamma
-        _OBJECTIVE_MAPPER: dict[
-            str, Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]
-        ] = {
-            "binary_focal": lambda y_true, y_pred: sklearn_binary_focal_objective(
-                y_true, y_pred, gamma=gamma
-            ),
-            "binary_weighted": lambda y_true, y_pred: sklearn_binary_weighted_objective(
-                y_true, y_pred, alpha=alpha
-            ),
+        _objective = Objective.get(objective)
+        _OBJECTIVE_MAPPER: dict[Objective, _SklearnObjLike] = {
+            Objective.binary_focal: lambda y_true,
+            y_pred: sklearn_binary_focal_objective(y_true, y_pred, gamma=gamma),
+            Objective.binary_weighted: lambda y_true,
+            y_pred: sklearn_binary_weighted_objective(y_true, y_pred, alpha=alpha),
         }
         super().__init__(
             boosting_type=boosting_type,
@@ -71,7 +73,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             learning_rate=learning_rate,
             n_estimators=n_estimators,
             subsample_for_bin=subsample_for_bin,
-            objective=_OBJECTIVE_MAPPER[objective],
+            objective=_OBJECTIVE_MAPPER[_objective],
             class_weight=class_weight,
             min_split_gain=min_split_gain,
             min_child_weight=min_child_weight,
