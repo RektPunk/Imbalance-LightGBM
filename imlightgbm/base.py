@@ -1,5 +1,8 @@
 from enum import Enum
 
+ALPHA_DEFAULT: float = 0.25
+GAMMA_DEFAULT: float = 2.0
+
 
 class BaseEnum(str, Enum):
     @classmethod
@@ -31,5 +34,7 @@ class Metric(BaseEnum):
 
 
 class Objective(BaseEnum):
-    focal: str = "focal"
-    weighted: str = "weighted"
+    binary_focal: str = "binary_focal"
+    binary_weighted: str = "binary_weighted"
+    multiclass_focal: str = "multiclass_focal"
+    multiclass_weighted: str = "multiclass_weighted"
