@@ -37,10 +37,15 @@ class ImbalancedBooster(lgb.Booster):
             validate_features=validate_features,
             **kwargs,
         )
-        if raw_score or pred_leaf or pred_contrib:
+        if (
+            raw_score
+            or pred_leaf
+            or pred_contrib
+            or isinstance(_predict, scipy.sparse.spmatrix | list[scipy.sparse.spmatrix])
+        ):
             return _predict
 
-        if isinstance(_predict, np.ndarray) and len(_predict.shape) == 1:
+        if len(_predict.shape) == 1:
             return expit(_predict)
 
         return _predict  # TODO: multiclass
