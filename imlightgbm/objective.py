@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 import numpy as np
 from lightgbm import Dataset
+from scipy.special import expit
 from sklearn.utils.multiclass import type_of_target
 
 from imlightgbm.base import Metric, Objective, SupportedTask
@@ -21,22 +22,16 @@ def _power(num_base: np.ndarray, num_pow: float):
     return np.sign(num_base) * (np.abs(num_base)) ** (num_pow)
 
 
-def _log(array: np.ndarray, is_prob: bool = False) -> np.ndarray:
+def _safe_log(array: np.ndarray, min_value: float = 1e-6) -> np.ndarray:
     """Safe log."""
-    _upper = 1 if is_prob else None
-    return np.log(np.clip(array, 1e-6, _upper))
-
-
-def _sigmoid(x: np.ndarray) -> np.ndarray:
-    """Convert raw predictions to probabilities in binary task."""
-    return 1 / (1 + np.exp(-x))
+    return np.log(np.clip(array, min_value))
 
 
 def sklearn_binary_focal_objective(
     y_true: np.ndarray, y_pred: np.ndarray, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary focal objective."""
-    pred_prob = _sigmoid(y_pred)
+    pred_prob = expit(y_pred)
 
     # gradient
     g1 = pred_prob * (1 - pred_prob)
@@ -44,13 +39,13 @@ def sklearn_binary_focal_objective(
     g3 = pred_prob + y_true - 1
     g4 = 1 - y_true - ((-1) ** y_true) * pred_prob
     g5 = y_true + ((-1) ** y_true) * pred_prob
-    grad = gamma * g3 * _power(g2, gamma) * _log(g4) + ((-1) ** y_true) * _power(
+    grad = gamma * g3 * _power(g2, gamma) * _safe_log(g4) + ((-1) ** y_true) * _power(
         g5, (gamma + 1)
     )
     # hess
     h1 = _power(g2, gamma) + gamma * ((-1) ** y_true) * g3 * _power(g2, (gamma - 1))
     h2 = ((-1) ** y_true) * g3 * _power(g2, gamma) / g4
-    hess = ((h1 * _log(g4) - h2) * gamma + (gamma + 1) * _power(g5, gamma)) * g1
+    hess = ((h1 * _safe_log(g4) - h2) * gamma + (gamma + 1) * _power(g5, gamma)) * g1
     return grad, hess
 
 
@@ -58,7 +53,7 @@ def sklearn_binary_weighted_objective(
     y_true: np.ndarray, y_pred: np.ndarray, alpha: float
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary weighted objective."""
-    pred_prob = _sigmoid(y_pred)
+    pred_prob = expit(y_pred)
     grad = -(alpha**y_true) * (y_true - pred_prob)
     hess = (alpha**y_true) * pred_prob * (1.0 - pred_prob)
     return grad, hess
