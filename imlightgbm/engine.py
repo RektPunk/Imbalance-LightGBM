@@ -3,9 +3,7 @@ from typing import Any, Callable
 
 import lightgbm as lgb
 import numpy as np
-import scipy
-import scipy.sparse
-from lightgbm.basic import _LGBM_PredictDataType
+from scipy.sparse import spmatrix
 from scipy.special import expit
 from sklearn.model_selection import BaseCrossValidator
 
@@ -16,7 +14,7 @@ from imlightgbm.objective.engine import set_params
 class ImbalancedBooster(lgb.Booster):
     def predict(
         self,
-        data: _LGBM_PredictDataType,
+        data: lgb.basic._LGBM_PredictDataType,
         start_iteration: int = 0,
         num_iteration: int | None = None,
         raw_score: bool = False,
@@ -25,7 +23,7 @@ class ImbalancedBooster(lgb.Booster):
         data_has_header: bool = False,
         validate_features: bool = False,
         **kwargs: Any,
-    ) -> np.ndarray | scipy.sparse.spmatrix | list[scipy.sparse.spmatrix]:
+    ) -> np.ndarray | spmatrix | list[spmatrix]:
         _predict = super().predict(
             data=data,
             start_iteration=start_iteration,
@@ -41,7 +39,7 @@ class ImbalancedBooster(lgb.Booster):
             raw_score
             or pred_leaf
             or pred_contrib
-            or isinstance(_predict, scipy.sparse.spmatrix | list[scipy.sparse.spmatrix])
+            or isinstance(_predict, spmatrix | list[spmatrix])
         ):
             return _predict
 
