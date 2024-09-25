@@ -39,7 +39,7 @@ class ImbalancedBooster(lgb.Booster):
             raw_score
             or pred_leaf
             or pred_contrib
-            or isinstance(_predict, spmatrix | list[spmatrix])
+            or isinstance(_predict, spmatrix | list)
         ):
             return _predict
 

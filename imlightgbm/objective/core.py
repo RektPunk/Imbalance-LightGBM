@@ -10,7 +10,7 @@ def _safe_power(num_base: np.ndarray, num_pow: float):
 
 def _safe_log(array: np.ndarray, min_value: float = 1e-6) -> np.ndarray:
     """Safe log."""
-    return np.log(np.clip(array, min_value))
+    return np.log(np.clip(array, min_value, None))
 
 
 def sklearn_binary_focal_objective(
