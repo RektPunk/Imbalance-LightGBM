@@ -24,6 +24,13 @@ class SupportedTask(BaseEnum):
     multiclass: str = "multiclass"
 
 
+class Objective(BaseEnum):
+    binary_focal: str = "binary_focal"
+    binary_weighted: str = "binary_weighted"
+    multiclass_focal: str = "multiclass_focal"
+    multiclass_weighted: str = "multiclass_weighted"
+
+
 class Metric(BaseEnum):
     auc: str = "auc"
     binary_logloss: str = "binary_logloss"
@@ -31,10 +38,3 @@ class Metric(BaseEnum):
     auc_mu: str = "auc_mu"
     multi_logloss: str = "multi_logloss"
     multi_error: str = "multi_error"
-
-
-class Objective(BaseEnum):
-    binary_focal: str = "binary_focal"
-    binary_weighted: str = "binary_weighted"
-    multiclass_focal: str = "multiclass_focal"
-    multiclass_weighted: str = "multiclass_weighted"
