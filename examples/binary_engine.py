@@ -1,5 +1,4 @@
 import lightgbm as lgb
-from scipy.special import expit
 from sklearn.datasets import load_breast_cancer
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -33,14 +32,15 @@ params_standard = {
 }
 
 # Train standard LightGBM model
-bst_standard = lgb.train(
+lgb_standard = lgb.train(
     params_standard, train_data, num_boost_round=100, valid_sets=[test_data]
 )
 
 # Parameters for Imbalanced LightGBM model
 params_imbalanced = {
-    "objective": "weighted",  # focal
-    "metric": "binary_logloss",  # auc
+    "objective": "binary_focal",  # binary_weighted
+    "gamma": 2.0,  # alpha with binary_weighted
+    "metric": "auc",
     "learning_rate": 0.05,
     "num_leaves": 31,
     "feature_fraction": 0.9,
@@ -50,24 +50,23 @@ params_imbalanced = {
     "early_stopping_rounds": 10,
 }
 
-bst_focal = imlgb.train(
+# Train imbalanced LightGBM model
+imlgb_focal = imlgb.train(
     params_imbalanced, train_data, num_boost_round=100, valid_sets=[test_data]
 )
 
 # Predict using standard LightGBM model
-y_pred_standard = bst_standard.predict(X_test)
+y_pred_standard = lgb_standard.predict(X_test)
 y_pred_standard_binary = (y_pred_standard > 0.5).astype(int)
 
 # Predict using Imbalanced LightGBM model
-y_pred_focal_raw = bst_focal.predict(X_test)
-y_pred_focal = expit(y_pred_focal_raw)
+y_pred_focal = imlgb_focal.predict(X_test)
 y_pred_focal_binary = (y_pred_focal > 0.5).astype(int)
 
 # Evaluate models
 accuracy_standard = accuracy_score(y_test, y_pred_standard_binary)
 logloss_standard = log_loss(y_test, y_pred_standard)
 rocauc_standard = roc_auc_score(y_test, y_pred_standard)
-
 
 accuracy_focal = accuracy_score(y_test, y_pred_focal_binary)
 logloss_focal = log_loss(y_test, y_pred_focal)

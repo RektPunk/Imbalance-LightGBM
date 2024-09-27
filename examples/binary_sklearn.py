@@ -15,7 +15,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Initialize the ImbalancedLGBMClassifier using binary focal loss
 clf = imlgb.ImbalancedLGBMClassifier(
-    objective="binary_focal",
+    objective="binary_focal",  # binary_weighted
+    gamma=2.0,  # alpha with binary_weighted
+    learning_rate=0.05,
+    num_leaves=31,
 )
 
 # Train the classifier on the training data
