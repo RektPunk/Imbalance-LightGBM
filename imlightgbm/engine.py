@@ -4,7 +4,7 @@ from typing import Any, Callable
 import lightgbm as lgb
 import numpy as np
 from scipy.sparse import spmatrix
-from scipy.special import expit
+from scipy.special import expit, softmax
 from sklearn.model_selection import BaseCrossValidator
 
 from imlightgbm.docstring import add_docstring
@@ -45,8 +45,8 @@ class ImbalancedBooster(lgb.Booster):
 
         if len(_predict.shape) == 1:
             return expit(_predict)
-
-        return _predict  # TODO: multiclass
+        else:
+            return softmax(_predict, axis=1)
 
 
 @add_docstring("train")
