@@ -3,7 +3,7 @@ from lightgbm import Dataset
 from scipy.special import expit, softmax
 
 
-def _safe_power(num_base: np.ndarray, num_pow: float):
+def _safe_power(num_base: np.ndarray, num_pow: float) -> np.ndarray:
     """Safe power."""
     return np.sign(num_base) * (np.abs(num_base)) ** (num_pow)
 
@@ -54,21 +54,19 @@ def binary_focal_objective(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary focal objective for engine."""
     label = train_data.get_label()
-    grad, hess = sklearn_binary_focal_objective(
+    return sklearn_binary_focal_objective(
         y_true=label,
         y_pred=pred,
         gamma=gamma,
     )
-    return grad, hess
 
 
-def binary_weighted_objective(pred: np.ndarray, train_data: Dataset, alpha: float):
+def binary_weighted_objective(
+    pred: np.ndarray, train_data: Dataset, alpha: float
+) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary weighted objective for engine."""
     label = train_data.get_label()
-    grad, hess = sklearn_binary_weighted_objective(
-        y_true=label, y_pred=pred, alpha=alpha
-    )
-    return grad, hess
+    return sklearn_binary_weighted_objective(y_true=label, y_pred=pred, alpha=alpha)
 
 
 def sklearn_multiclass_focal_objective(
@@ -79,7 +77,7 @@ def sklearn_multiclass_focal_objective(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass focal objective for sklearn API.."""
     pred_prob = softmax(y_pred, axis=1)
-    y_true_onehot = np.eye(num_class)[y_true]
+    y_true_onehot = np.eye(num_class)[y_true.astype(int)]
 
     # gradient
     g1 = pred_prob * (1 - pred_prob)
@@ -110,7 +108,7 @@ def sklearn_multiclass_weighted_objective(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass weighted objective for sklearn API."""
     pred_prob = softmax(y_pred, axis=1)
-    y_true_onehot = np.eye(num_class)[y_true]
+    y_true_onehot = np.eye(num_class)[y_true.astype(int)]
     grad = -(alpha**y_true_onehot) * (y_true_onehot - pred_prob)
     hess = (alpha**y_true_onehot) * pred_prob * (1.0 - pred_prob)
     return grad, hess
@@ -123,14 +121,13 @@ def multiclass_focal_objective(
     num_class: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass focal objective for engine."""
-    label = train_data.get_label().astype(int)
-    grad, hess = sklearn_multiclass_focal_objective(
+    label = train_data.get_label()
+    return sklearn_multiclass_focal_objective(
         y_true=label,
         y_pred=pred,
         gamma=gamma,
         num_class=num_class,
     )
-    return grad, hess
 
 
 def multiclass_weighted_objective(
@@ -138,13 +135,12 @@ def multiclass_weighted_objective(
     train_data: Dataset,
     alpha: float,
     num_class: int,
-) -> tuple[str, float, bool]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass weighted objective for engine."""
-    label = train_data.get_label().astype(int)
-    grad, hess = sklearn_multiclass_weighted_objective(
+    label = train_data.get_label()
+    return sklearn_multiclass_weighted_objective(
         y_true=label,
         y_pred=pred,
         alpha=alpha,
         num_class=num_class,
     )
-    return grad, hess
