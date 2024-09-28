@@ -35,8 +35,6 @@ clf.fit(X=X_train, y=y_train)
 # Make predictions on the test data
 y_pred_focal = clf.predict(X_test)
 
-
-# Evaluate the model performance using accuracy, log loss, and ROC AUC
 # Evaluate models
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred_focal))
