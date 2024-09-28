@@ -10,6 +10,8 @@ from imlightgbm.docstring import add_docstring
 from imlightgbm.objective.core import (
     sklearn_binary_focal_objective,
     sklearn_binary_weighted_objective,
+    sklearn_multiclass_focal_objective,
+    sklearn_multiclass_weighted_objective,
 )
 from imlightgbm.utils import validate_positive_number
 
@@ -44,6 +46,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         random_state: int | np.random.RandomState | np.random.Generator | None = None,
         n_jobs: int | None = None,
         importance_type: str = "split",
+        num_class: int | None = None,
     ) -> None:
         """Construct a gradient boosting model.
 
@@ -52,20 +55,42 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         objective : str
             Specify the learning objective. Options are 'binary_focal' and 'binary_weighted'.
         alpha: float
+            For 'binary_weighted' objective
         gamma: float
-        Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more other parameters.
+            For 'binary_focal' objective
+        other parameters:
+            Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more details.
         """
         validate_positive_number(alpha)
         validate_positive_number(gamma)
 
         self.alpha = alpha
         self.gamma = gamma
+        self.num_class = num_class
         _objective = Objective.get(objective)
-        _OBJECTIVE_MAPPER: dict[Objective, _SklearnObjLike] = {
+        if _objective in {
+            Objective.multiclass_focal,
+            Objective.multiclass_weighted,
+        } and not isinstance(num_class, int):
+            raise ValueError("num_class must be provided")
+
+        _objective_mapper: dict[Objective, _SklearnObjLike] = {
             Objective.binary_focal: lambda y_true,
-            y_pred: sklearn_binary_focal_objective(y_true, y_pred, gamma=gamma),
+            y_pred: sklearn_binary_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=gamma
+            ),
             Objective.binary_weighted: lambda y_true,
-            y_pred: sklearn_binary_weighted_objective(y_true, y_pred, alpha=alpha),
+            y_pred: sklearn_binary_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=alpha
+            ),
+            Objective.multiclass_focal: lambda y_true,
+            y_pred: sklearn_multiclass_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=gamma, num_class=num_class
+            ),
+            Objective.multiclass_weighted: lambda y_true,
+            y_pred: sklearn_multiclass_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=alpha, num_class=num_class
+            ),
         }
         super().__init__(
             boosting_type=boosting_type,
@@ -74,7 +99,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             learning_rate=learning_rate,
             n_estimators=n_estimators,
             subsample_for_bin=subsample_for_bin,
-            objective=_OBJECTIVE_MAPPER[_objective],
+            objective=_objective_mapper[_objective],
             class_weight=class_weight,
             min_split_gain=min_split_gain,
             min_child_weight=min_child_weight,
@@ -102,7 +127,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         **kwargs: Any,
     ) -> np.ndarray | spmatrix | list[spmatrix]:
         """Docstring is inherited from the LGBMClassifier."""
-        result = super().predict(
+        _predict = super().predict(
             X=X,
             raw_score=raw_score,
             start_iteration=start_iteration,
@@ -112,13 +137,18 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             validate_features=validate_features,
             **kwargs,
         )
-        if raw_score or pred_leaf or pred_contrib:
-            return result
+        if (
+            raw_score
+            or pred_leaf
+            or pred_contrib
+            or isinstance(_predict, spmatrix | list)
+        ):
+            return _predict
 
-        if self._LGBMClassifier__is_multiclass:  # TODO: multiclass
-            class_index = np.argmax(result, axis=1)
-            return self._LGBMClassifier_le.inverse_transform(class_index)
+        if self._LGBMClassifier__is_multiclass:
+            class_index = np.argmax(_predict, axis=1)
+            return self._le.inverse_transform(class_index)
         else:
-            return expit(result)
+            return expit(_predict)
 
     predict.__doc__ = LGBMClassifier.predict.__doc__
