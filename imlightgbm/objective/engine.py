@@ -33,7 +33,11 @@ def _get_metric(task_enum: SupportedTask, metric: str | None) -> str:
     Defaults to auc (binary), auc_mu (multiclass).
     """
     metric_mapper: dict[SupportedTask, list[Metric]] = {
-        SupportedTask.binary: [Metric.auc, Metric.binary_error, Metric.binary_logloss],
+        SupportedTask.binary: [
+            Metric.auc,
+            Metric.binary_error,
+            Metric.binary_logloss,
+        ],
         SupportedTask.multiclass: [
             Metric.auc_mu,
             Metric.multi_logloss,
@@ -61,8 +65,14 @@ def _get_objective(
     """Retrieve the appropriate objective function based on task and objective type."""
     objective_mapper: dict[SupportedTask, dict[Objective, ObjLike]] = {
         SupportedTask.binary: {
-            Objective.binary_focal: partial(binary_focal_objective, gamma=gamma),
-            Objective.binary_weighted: partial(binary_weighted_objective, alpha=alpha),
+            Objective.binary_focal: partial(
+                binary_focal_objective,
+                gamma=gamma,
+            ),
+            Objective.binary_weighted: partial(
+                binary_weighted_objective,
+                alpha=alpha,
+            ),
         },
         SupportedTask.multiclass: {
             Objective.multiclass_focal: partial(
