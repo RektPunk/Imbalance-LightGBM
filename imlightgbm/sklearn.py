@@ -67,31 +67,6 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         self.alpha = alpha
         self.gamma = gamma
         self.num_class = num_class
-        _objective = Objective.get(objective)
-        if _objective in {
-            Objective.multiclass_focal,
-            Objective.multiclass_weighted,
-        } and not isinstance(num_class, int):
-            raise ValueError("num_class must be provided")
-
-        _objective_mapper: dict[Objective, _SklearnObjLike] = {
-            Objective.binary_focal: lambda y_true,
-            y_pred: sklearn_binary_focal_objective(
-                y_true=y_true, y_pred=y_pred, gamma=gamma
-            ),
-            Objective.binary_weighted: lambda y_true,
-            y_pred: sklearn_binary_weighted_objective(
-                y_true=y_true, y_pred=y_pred, alpha=alpha
-            ),
-            Objective.multiclass_focal: lambda y_true,
-            y_pred: sklearn_multiclass_focal_objective(
-                y_true=y_true, y_pred=y_pred, gamma=gamma, num_class=num_class
-            ),
-            Objective.multiclass_weighted: lambda y_true,
-            y_pred: sklearn_multiclass_weighted_objective(
-                y_true=y_true, y_pred=y_pred, alpha=alpha, num_class=num_class
-            ),
-        }
         super().__init__(
             boosting_type=boosting_type,
             num_leaves=num_leaves,
@@ -99,7 +74,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             learning_rate=learning_rate,
             n_estimators=n_estimators,
             subsample_for_bin=subsample_for_bin,
-            objective=_objective_mapper[_objective],
+            objective=self.__objective_select(objective=objective),
             class_weight=class_weight,
             min_split_gain=min_split_gain,
             min_child_weight=min_child_weight,
@@ -152,3 +127,31 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             return expit(_predict)
 
     predict.__doc__ = LGBMClassifier.predict.__doc__
+
+    def __objective_select(self, objective: str) -> _SklearnObjLike:
+        _objective = Objective.get(objective)
+        if _objective in {
+            Objective.multiclass_focal,
+            Objective.multiclass_weighted,
+        } and not isinstance(self.num_class, int):
+            raise ValueError("num_class must be provided")
+
+        _objective_mapper: dict[Objective, _SklearnObjLike] = {
+            Objective.binary_focal: lambda y_true,
+            y_pred: sklearn_binary_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=self.gamma
+            ),
+            Objective.binary_weighted: lambda y_true,
+            y_pred: sklearn_binary_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=self.alpha
+            ),
+            Objective.multiclass_focal: lambda y_true,
+            y_pred: sklearn_multiclass_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=self.gamma, num_class=self.num_class
+            ),
+            Objective.multiclass_weighted: lambda y_true,
+            y_pred: sklearn_multiclass_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=self.alpha, num_class=self.num_class
+            ),
+        }
+        return _objective_mapper[_objective]
