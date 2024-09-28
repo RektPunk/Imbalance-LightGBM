@@ -56,11 +56,7 @@ def sklearn_binary_focal_objective(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary focal objective for sklearn API."""
     pred_prob = expit(y_pred)
-    return _focal_grad_hess(
-        y_true=y_true,
-        pred_prob=pred_prob,
-        gamma=gamma,
-    )
+    return _focal_grad_hess(y_true=y_true, pred_prob=pred_prob, gamma=gamma)
 
 
 def sklearn_binary_weighted_objective(
@@ -76,11 +72,7 @@ def binary_focal_objective(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary focal objective for engine."""
     label = train_data.get_label()
-    return sklearn_binary_focal_objective(
-        y_true=label,
-        y_pred=pred,
-        gamma=gamma,
-    )
+    return sklearn_binary_focal_objective(y_true=label, y_pred=pred, gamma=gamma)
 
 
 def binary_weighted_objective(
@@ -100,11 +92,7 @@ def sklearn_multiclass_focal_objective(
     """Return grad, hess for multclass focal objective for sklearn API.."""
     pred_prob = softmax(y_pred, axis=1)
     y_true_onehot = np.eye(num_class)[y_true.astype(int)]
-    return _focal_grad_hess(
-        y_true=y_true_onehot,
-        pred_prob=pred_prob,
-        gamma=gamma,
-    )
+    return _focal_grad_hess(y_true=y_true_onehot, pred_prob=pred_prob, gamma=gamma)
 
 
 def sklearn_multiclass_weighted_objective(
