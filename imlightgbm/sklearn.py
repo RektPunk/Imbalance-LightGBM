@@ -26,8 +26,8 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         self,
         *,
         objective: str,
-        alpha: float = ALPHA_DEFAULT,
-        gamma: float = GAMMA_DEFAULT,
+        alpha: float | None = None,
+        gamma: float | None = None,
         boosting_type: str = "gbdt",
         num_leaves: int = 31,
         max_depth: int = -1,
@@ -61,12 +61,11 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         other parameters:
             Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more details.
         """
-        validate_positive_number(alpha)
-        validate_positive_number(gamma)
-
-        self.alpha = alpha
-        self.gamma = gamma
         self.num_class = num_class
+        _objective_enum, _objective = self.__objective_select(objective=objective)
+        self.__alpha_select(objective=_objective_enum, alpha=alpha)
+        self.__gamma_select(objective=_objective_enum, gamma=gamma)
+
         super().__init__(
             boosting_type=boosting_type,
             num_leaves=num_leaves,
@@ -74,7 +73,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             learning_rate=learning_rate,
             n_estimators=n_estimators,
             subsample_for_bin=subsample_for_bin,
-            objective=self.__objective_select(objective=objective),
+            objective=_objective,
             class_weight=class_weight,
             min_split_gain=min_split_gain,
             min_child_weight=min_child_weight,
@@ -128,7 +127,8 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
 
     predict.__doc__ = LGBMClassifier.predict.__doc__
 
-    def __objective_select(self, objective: str) -> _SklearnObjLike:
+    def __objective_select(self, objective: str) -> tuple[Objective, _SklearnObjLike]:
+        """Select objective function."""
         _objective: Objective = Objective.get(objective)
         if _objective in {
             Objective.multiclass_focal,
@@ -154,4 +154,42 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
                 y_true=y_true, y_pred=y_pred, alpha=self.alpha, num_class=self.num_class
             ),
         }
-        return _objective_mapper[_objective]
+        return _objective, _objective_mapper[_objective]
+
+    def __param_select(
+        self,
+        objective: Objective,
+        param: float | None,
+        valid_objectives: set[Objective],
+        default_value: float,
+        param_name: str,
+    ) -> None:
+        """General method to select appropriate parameter (alpha or gamma)."""
+        if objective not in valid_objectives:
+            setattr(self, param_name, None)
+            return
+        if param:
+            validate_positive_number(param)
+            setattr(self, param_name, param)
+            return
+        setattr(self, param_name, default_value)
+
+    def __alpha_select(self, objective: Objective, alpha: float | None) -> None:
+        """Select appropriate alpha."""
+        self.__param_select(
+            objective=objective,
+            param=alpha,
+            valid_objectives={Objective.binary_weighted, Objective.multiclass_weighted},
+            default_value=ALPHA_DEFAULT,
+            param_name="alpha",
+        )
+
+    def __gamma_select(self, objective: Objective, gamma: float | None) -> None:
+        """Select appropriate gamma."""
+        self.__param_select(
+            objective=objective,
+            param=gamma,
+            valid_objectives={Objective.binary_focal, Objective.multiclass_focal},
+            default_value=GAMMA_DEFAULT,
+            param_name="gamma",
+        )
