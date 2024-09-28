@@ -129,7 +129,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
     predict.__doc__ = LGBMClassifier.predict.__doc__
 
     def __objective_select(self, objective: str) -> _SklearnObjLike:
-        _objective = Objective.get(objective)
+        _objective: Objective = Objective.get(objective)
         if _objective in {
             Objective.multiclass_focal,
             Objective.multiclass_weighted,
