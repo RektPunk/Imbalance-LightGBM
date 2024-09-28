@@ -62,10 +62,10 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more details.
         """
         self.num_class = num_class
-        _objective_enum, _objective = self.__objective_select(objective=objective)
+        _objective_enum: Objective = Objective.get(objective)
         self.__alpha_select(objective=_objective_enum, alpha=alpha)
         self.__gamma_select(objective=_objective_enum, gamma=gamma)
-
+        _objective = self.__objective_select(objective_enum=_objective_enum)
         super().__init__(
             boosting_type=boosting_type,
             num_leaves=num_leaves,
@@ -127,10 +127,9 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
 
     predict.__doc__ = LGBMClassifier.predict.__doc__
 
-    def __objective_select(self, objective: str) -> tuple[Objective, _SklearnObjLike]:
+    def __objective_select(self, objective_enum: Objective) -> _SklearnObjLike:
         """Select objective function."""
-        _objective: Objective = Objective.get(objective)
-        if _objective in {
+        if objective_enum in {
             Objective.multiclass_focal,
             Objective.multiclass_weighted,
         } and not isinstance(self.num_class, int):
@@ -154,7 +153,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
                 y_true=y_true, y_pred=y_pred, alpha=self.alpha, num_class=self.num_class
             ),
         }
-        return _objective, _objective_mapper[_objective]
+        return _objective_mapper[objective_enum]
 
     def __param_select(
         self,
