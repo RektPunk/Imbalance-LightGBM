@@ -19,7 +19,7 @@ _SklearnObjLike = Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarra
 
 
 class ImbalancedLGBMClassifier(LGBMClassifier):
-    """Inbalanced LightGBM classifier."""
+    """Imbalanced LightGBM classifier."""
 
     @add_docstring("classifier")
     def __init__(
@@ -48,19 +48,6 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         importance_type: str = "split",
         num_class: int | None = None,
     ) -> None:
-        """Construct a gradient boosting model.
-
-        Parameters
-        ----------
-        objective : str
-            Specify the learning objective. Options are 'binary_focal' and 'binary_weighted'.
-        alpha: float
-            For 'binary_weighted' objective
-        gamma: float
-            For 'binary_focal' objective
-        other parameters:
-            Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more details.
-        """
         self.num_class = num_class
         _objective_enum: Objective = Objective.get(objective)
         self.__alpha_select(objective=_objective_enum, alpha=alpha)
@@ -100,7 +87,6 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         validate_features: bool = False,
         **kwargs: Any,
     ) -> np.ndarray | spmatrix | list[spmatrix]:
-        """Docstring is inherited from the LGBMClassifier."""
         _predict = super().predict(
             X=X,
             raw_score=raw_score,

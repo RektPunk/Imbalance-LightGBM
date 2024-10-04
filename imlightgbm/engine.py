@@ -48,6 +48,8 @@ class ImbalancedBooster(lgb.Booster):
         else:
             return softmax(_predict, axis=1)
 
+    predict.__doc__ = lgb.Booster.predict.__doc__
+
 
 @add_docstring("train")
 def train(
