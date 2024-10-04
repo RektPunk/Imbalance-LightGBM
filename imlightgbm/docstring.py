@@ -92,10 +92,12 @@ _CLASSIFIER_DOC = """Construct a gradient boosting model.
 Parameters
 ----------
 objective : str
-    Specify the learning objective
-    'binary_focal', 'binary_weighted'.
+    Specify the learning objective.
+    Options are 'binary_focal', 'binary_weighted', 'multiclass focal', and 'multiclas_weighted'.
 alpha: float
+    Parameter used with 'binary_weighted' and 'multiclass_weighted' objective.
 gamma: float
+    Parameter used with 'binary_focal' and 'multiclass_focal' objective.
 boosting_type : str, optional (default='gbdt')
     'gbdt', traditional Gradient Boosting Decision Tree.
     'dart', Dropouts meet Multiple Additive Regression Trees.
