@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "imlightgbm"
 version = "0.1.0"
 description = "LightGBM for label-imbalanced data with focal and weighted loss function"
@@ -9,15 +9,13 @@ repository = "https://github.com/RektPunk/Imbalance-LightGBM"
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
+requires-python = ">=3.10"
+dependencies = [
+    "lightgbm>=4.5.0",
+    "scikit-learn>=1.5.2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-lightgbm = "^4.5.0"
-scikit-learn = "^1.5.2"
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.8.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+]
