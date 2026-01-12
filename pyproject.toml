@@ -2,7 +2,9 @@
 name = "imlightgbm"
 version = "0.1.1"
 description = "LightGBM for label-imbalanced data with focal and weighted loss function"
-authors = ["RektPunk <rektpunk@gmail.com>"]
+authors = [
+    {name = "RektPunk", email = "rektpunk@gmail.com"},
+]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/RektPunk/Imbalance-LightGBM"
@@ -14,6 +16,9 @@ dependencies = [
     "lightgbm>=4.5.0",
     "scikit-learn>=1.5.2",
 ]
+
+[project.urls]
+repository = "https://github.com/RektPunk/Imbalance-LightGBM"
 
 [dependency-groups]
 dev = [
