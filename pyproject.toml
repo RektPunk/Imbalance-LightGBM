@@ -1,6 +1,6 @@
 [project]
 name = "imlightgbm"
-version = "0.1.0"
+version = "0.1.1"
 description = "LightGBM for label-imbalanced data with focal and weighted loss function"
 authors = ["RektPunk <rektpunk@gmail.com>"]
 license = "MIT"
