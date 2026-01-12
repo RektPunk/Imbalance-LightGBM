@@ -129,6 +129,8 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         **kwargs
             Other parameters for the model.
             Check http://lightgbm.readthedocs.io/en/latest/Parameters.html for more parameters.
+
+            .. warning::
             **kwargs is not supported in sklearn, it may cause unexpected issues.
         """
 
