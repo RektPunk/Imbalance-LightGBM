@@ -1,20 +1,7 @@
 <div style="text-align: center;">
   <img src="https://capsule-render.vercel.app/api?type=transparent&height=150&color=gradient&text=imlightgbm&fontColor=0047AB&section=header&reversal=false&desc=Imbalanced-LightGBM&descAlignY=83&fontSize=80">
 </div>
-<p align="center">
-  <a href="https://github.com/RektPunk/Imbalance-LightGBM/releases/latest">
-    <img alt="release" src="https://img.shields.io/github/v/release/RektPunk/Imbalance-LightGBM.svg">
-  </a>
-  <a href="https://pypi.org/project/imlightgbm">
-    <img alt="Pythonv" src="https://img.shields.io/pypi/pyversions/imlightgbm.svg?logo=python&logoColor=white">
-  </a>
-  <a href="https://github.com/RektPunk/Imbalance-LightGBM/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/RektPunk/Imbalance-LightGBM.svg">
-  </a>
-  <a href="https://github.com/RektPunk/Imbalance-LightGBM/actions/workflows/lint.yaml">
-    <img alt="Lint" src="https://github.com/RektPunk/Imbalance-LightGBM/actions/workflows/lint.yaml/badge.svg?branch=main">
-  </a>
-</p>
+
 
 
 This repository contains implementations of weighted loss and focal loss functions specifically designed for classification problems using LightGBM.
