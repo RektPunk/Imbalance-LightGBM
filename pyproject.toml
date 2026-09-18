@@ -1,15 +1,12 @@
 [project]
 name = "imlightgbm"
-version = "0.1.1"
-description = "LightGBM for label-imbalanced data with focal and weighted loss function"
+version = "0.1.2"
+description = "LightGBM for handling label-imbalanced data with focal and weighted loss functions in binary and multiclass classification"
+readme = "README.md"
 authors = [
-    {name = "RektPunk", email = "rektpunk@gmail.com"},
+    { name = "RektPunk", email = "rektpunk@gmail.com" }
 ]
 license = "MIT"
-readme = "README.md"
-classifiers = [
-    "Topic :: Software Development :: Libraries :: Python Modules"
-]
 requires-python = ">=3.10"
 dependencies = [
     "lightgbm>=4.5.0",
@@ -19,7 +16,10 @@ dependencies = [
 [project.urls]
 repository = "https://github.com/RektPunk/Imbalance-LightGBM"
 
-[dependency-groups]
-dev = [
-    "pre-commit>=4.5.1",
-]
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP", "SIM"]
+ignore = ["E501", "TRY003"]
