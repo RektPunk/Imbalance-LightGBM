@@ -24,12 +24,10 @@ class ImbalancedBooster(lgb.Booster):
         ):
             return _predict
 
-        if len(_predict.shape) == 1:
+        if _predict.ndim == 1:
             return expit(_predict)
-        else:
-            return softmax(_predict, axis=1)
 
-    predict.__doc__ = lgb.Booster.predict.__doc__
+        return softmax(_predict, axis=1)
 
 
 def train(

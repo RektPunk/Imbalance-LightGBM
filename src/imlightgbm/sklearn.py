@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import Any
 
 import numpy as np
 from lightgbm.sklearn import LGBMClassifier, _LGBM_ScikitMatrixLike
@@ -56,13 +55,12 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         ):
             return _predict
 
-        if self._LGBMClassifier__is_multiclass:
-            class_index = np.argmax(_predict, axis=1)
-            return self._le.inverse_transform(class_index)
-        else:
+        if _predict.ndim == 1:
             return expit(_predict)
 
-    predict.__doc__ = LGBMClassifier.predict.__doc__
+        class_index = np.argmax(_predict, axis=1)
+
+        return self._le.inverse_transform(class_index)
 
     def __objective_select(self, objective_enum: Objective) -> _SklearnObjLike:
         """Select objective function."""
