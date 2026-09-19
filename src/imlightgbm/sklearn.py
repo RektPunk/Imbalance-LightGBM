@@ -44,7 +44,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         )
 
     def predict(self, *args, **kwargs) -> np.ndarray | spmatrix | list[spmatrix]:
-        """Predict class labels for X."""
+        """Predict class labels."""
         _predict = LGBMModel.predict(self, *args, **kwargs)
         if (
             kwargs.get("raw_score", False)
@@ -61,7 +61,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         return self._le.inverse_transform(np.argmax(_predict, axis=1))
 
     def predict_proba(self, *args, **kwargs) -> np.ndarray | spmatrix | list[spmatrix]:
-        """Predict class probabilities for X."""
+        """Predict class probabilities."""
         _predict = LGBMModel.predict(self, *args, raw_score=True, **kwargs)
         if (
             kwargs.get("pred_leaf", False)
