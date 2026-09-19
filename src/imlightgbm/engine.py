@@ -17,7 +17,10 @@ from imlightgbm.objective import (
 from imlightgbm.parameters import select_alpha, select_gamma
 
 
-def select_metric(objective: str, metric: str | None) -> str:
+def select_metric(
+    objective: str,
+    metric: str | list[str] | tuple[str, ...] | set[str] | None,
+) -> str | list[str] | tuple[str, ...] | set[str]:
     """Select the metric for the objective."""
     if metric is not None:
         return metric
@@ -61,8 +64,15 @@ def set_params(params: dict[str, Any]) -> dict[str, Any]:
 
     _objective: str = _params["objective"]
     _metric = _params.pop("metric", None)
-    if _metric and not isinstance(_metric, str):
+    if callable(_metric) or (
+        isinstance(_metric, (list, tuple, set)) and any(callable(m) for m in _metric)
+    ):
         raise ValueError("custom metric are not supported.")
+
+    if _metric is not None and not isinstance(_metric, (str, list, tuple, set)):
+        raise TypeError(
+            f"metric must be a string or collection of strings, but got {type(_metric).__name__}."
+        )
 
     _alpha = select_alpha(_objective, _params.pop("alpha", None))
     _gamma = select_gamma(_objective, _params.pop("gamma", None))
