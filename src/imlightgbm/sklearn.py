@@ -6,11 +6,11 @@ from scipy.sparse import spmatrix
 from scipy.special import expit
 
 from imlightgbm.base import ALPHA_DEFAULT, GAMMA_DEFAULT, Objective
-from imlightgbm.objective.core import (
-    sklearn_binary_focal_objective,
-    sklearn_binary_weighted_objective,
-    sklearn_multiclass_focal_objective,
-    sklearn_multiclass_weighted_objective,
+from imlightgbm.objective import (
+    binary_focal_objective,
+    binary_weighted_objective,
+    multiclass_focal_objective,
+    multiclass_weighted_objective,
 )
 from imlightgbm.utils import validate_positive_number
 
@@ -41,12 +41,8 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             **kwargs,
         )
 
-    def predict(
-        self,
-        X: _LGBM_ScikitMatrixLike,
-        **kwargs,
-    ) -> np.ndarray | spmatrix | list[spmatrix]:
-        _predict = super().predict(X=X, **kwargs)
+    def predict(self, *args, **kwargs) -> np.ndarray | spmatrix | list[spmatrix]:
+        _predict = super().predict(*args, **kwargs)
         if (
             kwargs.get("raw_score", False)
             or kwargs.get("pred_leaf", False)
@@ -71,18 +67,14 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
             raise ValueError("num_class must be provided")
 
         _objective_mapper: dict[Objective, _SklearnObjLike] = {
-            Objective.binary_focal: lambda y_true, y_pred: (
-                sklearn_binary_focal_objective(
-                    y_true=y_true, y_pred=y_pred, gamma=self.gamma
-                )
+            Objective.binary_focal: lambda y_true, y_pred: binary_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=self.gamma
             ),
-            Objective.binary_weighted: lambda y_true, y_pred: (
-                sklearn_binary_weighted_objective(
-                    y_true=y_true, y_pred=y_pred, alpha=self.alpha
-                )
+            Objective.binary_weighted: lambda y_true, y_pred: binary_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=self.alpha
             ),
             Objective.multiclass_focal: lambda y_true, y_pred: (
-                sklearn_multiclass_focal_objective(
+                multiclass_focal_objective(
                     y_true=y_true,
                     y_pred=y_pred,
                     gamma=self.gamma,
@@ -90,7 +82,7 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
                 )
             ),
             Objective.multiclass_weighted: lambda y_true, y_pred: (
-                sklearn_multiclass_weighted_objective(
+                multiclass_weighted_objective(
                     y_true=y_true,
                     y_pred=y_pred,
                     alpha=self.alpha,
