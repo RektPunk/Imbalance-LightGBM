@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 from lightgbm import Dataset
 from scipy.special import expit, softmax
@@ -51,71 +53,71 @@ def _focal_grad_hess(
     return grad, hess
 
 
-def sklearn_binary_focal_objective(
+def binary_focal_objective(
     y_true: np.ndarray, y_pred: np.ndarray, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return grad, hess for binary focal objective for sklearn API."""
+    """Return grad, hess for binary focal objective."""
     pred_prob = expit(y_pred)
     return _focal_grad_hess(y_true=y_true, pred_prob=pred_prob, gamma=gamma)
 
 
-def sklearn_binary_weighted_objective(
+def binary_weighted_objective(
     y_true: np.ndarray, y_pred: np.ndarray, alpha: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return grad, hess for binary weighted objective for sklearn API."""
+    """Return grad, hess for binary weighted objective."""
     pred_prob = expit(y_pred)
     return _weighted_grad_hess(y_true=y_true, pred_prob=pred_prob, alpha=alpha)
 
 
-def binary_focal_objective(
+def binary_focal_lgb_objective(
     pred: np.ndarray, train_data: Dataset, gamma: float
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary focal objective for engine."""
-    label = train_data.get_label()
-    return sklearn_binary_focal_objective(y_true=label, y_pred=pred, gamma=gamma)
+    label = cast(np.ndarray, train_data.get_label())
+    return binary_focal_objective(y_true=label, y_pred=pred, gamma=gamma)
 
 
-def binary_weighted_objective(
+def binary_weighted_lgb_objective(
     pred: np.ndarray, train_data: Dataset, alpha: float
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for binary weighted objective for engine."""
-    label = train_data.get_label()
-    return sklearn_binary_weighted_objective(y_true=label, y_pred=pred, alpha=alpha)
+    label = cast(np.ndarray, train_data.get_label())
+    return binary_weighted_objective(y_true=label, y_pred=pred, alpha=alpha)
 
 
-def sklearn_multiclass_focal_objective(
+def multiclass_focal_objective(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     gamma: float,
     num_class: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return grad, hess for multclass focal objective for sklearn API."""
+    """Return grad, hess for multclass focal objective."""
     pred_prob = softmax(y_pred, axis=1)
     y_true_onehot = np.eye(num_class)[y_true.astype(int)]
     return _focal_grad_hess(y_true=y_true_onehot, pred_prob=pred_prob, gamma=gamma)
 
 
-def sklearn_multiclass_weighted_objective(
+def multiclass_weighted_objective(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     alpha: float,
     num_class: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return grad, hess for multclass weighted objective for sklearn API."""
+    """Return grad, hess for multclass weighted objective."""
     pred_prob = softmax(y_pred, axis=1)
     y_true_onehot = np.eye(num_class)[y_true.astype(int)]
     return _weighted_grad_hess(y_true=y_true_onehot, pred_prob=pred_prob, alpha=alpha)
 
 
-def multiclass_focal_objective(
+def multiclass_focal_lgb_objective(
     pred: np.ndarray,
     train_data: Dataset,
     gamma: float,
     num_class: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass focal objective for engine."""
-    label = train_data.get_label()
-    return sklearn_multiclass_focal_objective(
+    label = cast(np.ndarray, train_data.get_label())
+    return multiclass_focal_objective(
         y_true=label,
         y_pred=pred,
         gamma=gamma,
@@ -123,15 +125,15 @@ def multiclass_focal_objective(
     )
 
 
-def multiclass_weighted_objective(
+def multiclass_weighted_lgb_objective(
     pred: np.ndarray,
     train_data: Dataset,
     alpha: float,
     num_class: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return grad, hess for multclass weighted objective for engine."""
-    label = train_data.get_label()
-    return sklearn_multiclass_weighted_objective(
+    label = cast(np.ndarray, train_data.get_label())
+    return multiclass_weighted_objective(
         y_true=label,
         y_pred=pred,
         alpha=alpha,
