@@ -10,6 +10,7 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "lightgbm>=4.5.0",
+    "scikit-learn>=1.5.2",
 ]
 
 [project.urls]
@@ -22,3 +23,8 @@ build-backend = "uv_build"
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP", "SIM"]
 ignore = ["E501", "TRY003"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
