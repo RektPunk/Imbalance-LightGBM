@@ -20,11 +20,11 @@ repository = "https://github.com/RektPunk/Imbalance-LightGBM"
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
 
-[tool.ruff.lint]
-select = ["B", "E", "F", "I", "UP", "SIM"]
-ignore = ["E501", "TRY003"]
-
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I"]
+ignore = ["E501"]
