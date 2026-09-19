@@ -5,32 +5,27 @@ from typing import Any
 
 import lightgbm as lgb
 import numpy as np
-from lightgbm import Dataset
 from scipy.sparse import spmatrix
 from scipy.special import expit, softmax
 
-from imlightgbm.base import ALPHA_DEFAULT, GAMMA_DEFAULT, validate_positive_number
 from imlightgbm.objective import (
     binary_focal_lgb_objective,
     binary_weighted_lgb_objective,
     multiclass_focal_lgb_objective,
     multiclass_weighted_lgb_objective,
 )
-
-SUPPORTED_TASKS = {"binary", "multiclass"}
-BINARY_OBJECTIVES = {"binary_focal", "binary_weighted"}
-MULTICLASS_OBJECTIVES = {"multiclass_focal", "multiclass_weighted"}
-
-BINARY_METRICS = {"auc", "binary_error", "binary_logloss"}
-MULTICLASS_METRICS = {"auc_mu", "multi_logloss", "multi_error"}
+from imlightgbm.parameters import select_alpha, select_gamma
 
 
 def select_metric(objective: str, metric: str | None) -> str:
-    """Retrieve the appropriate metric function based on task."""
+    """Select the metric for the objective."""
+    if metric is not None:
+        return metric
+
     return (
-        metric or BINARY_METRICS.pop()
-        if objective in BINARY_OBJECTIVES
-        else MULTICLASS_METRICS.pop()
+        "binary_logloss"
+        if objective in {"binary_focal", "binary_weighted"}
+        else "multi_logloss"
     )
 
 
@@ -39,11 +34,9 @@ def select_objective(
     alpha: float,
     gamma: float,
     num_class: int,
-) -> Callable[[np.ndarray, Dataset], tuple[np.ndarray, np.ndarray]]:
+) -> Callable:
     """Retrieve the appropriate objective function based on task and objective type."""
-    objective_mapper: dict[
-        str, Callable[[np.ndarray, Dataset], tuple[np.ndarray, np.ndarray]]
-    ] = {
+    objective_mapper: dict[str, Callable] = {
         "binary_focal": partial(binary_focal_lgb_objective, gamma=gamma),
         "binary_weighted": partial(binary_weighted_lgb_objective, alpha=alpha),
         "multiclass_focal": partial(
@@ -69,21 +62,17 @@ def set_params(params: dict[str, Any]) -> dict[str, Any]:
     _objective: str = _params["objective"]
     _metric = _params.pop("metric", None)
     if _metric and not isinstance(_metric, str):
-        raise ValueError("metric must be str.")
+        raise ValueError("custom metric are not supported.")
 
-    _alpha = _params.pop("alpha", ALPHA_DEFAULT)
-    _gamma = _params.pop("gamma", GAMMA_DEFAULT)
-
-    validate_positive_number(_alpha)
-    validate_positive_number(_gamma)
-
-    feval = select_metric(objective=_objective, metric=_metric)
+    _alpha = select_alpha(_objective, _params.pop("alpha", None))
+    _gamma = select_gamma(_objective, _params.pop("gamma", None))
     fobj = select_objective(
         objective=_objective,
         alpha=_alpha,
         gamma=_gamma,
         num_class=_params.get("num_class", -1),
     )
+    feval = select_metric(objective=_objective, metric=_metric)
     _params.update({"objective": fobj, "metric": feval})
     return _params
 
@@ -95,6 +84,7 @@ class ImbalancedBooster(lgb.Booster):
         *args,
         **kwargs,
     ) -> np.ndarray | spmatrix | list[spmatrix]:
+        """Make a prediction."""
         _predict = super().predict(data, *args, **kwargs)
         if (
             kwargs.get("raw_score", False)

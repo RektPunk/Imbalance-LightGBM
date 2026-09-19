@@ -5,16 +5,13 @@ from lightgbm.sklearn import LGBMClassifier
 from scipy.sparse import spmatrix
 from scipy.special import expit
 
-from imlightgbm.base import ALPHA_DEFAULT, GAMMA_DEFAULT, Objective
 from imlightgbm.objective import (
     binary_focal_objective,
     binary_weighted_objective,
     multiclass_focal_objective,
     multiclass_weighted_objective,
 )
-from imlightgbm.utils import validate_positive_number
-
-_SklearnObjLike = Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]
+from imlightgbm.parameters import select_alpha, select_gamma
 
 
 class ImbalancedLGBMClassifier(LGBMClassifier):
@@ -32,16 +29,27 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         """Construct a gradient boosting model."""
 
         self.num_class = num_class
-        _objective_enum: Objective = Objective[objective]
-        self.__alpha_select(objective=_objective_enum, alpha=alpha)
-        self.__gamma_select(objective=_objective_enum, gamma=gamma)
-        _objective = self.__objective_select(objective_enum=_objective_enum)
+        self.alpha = select_alpha(objective, alpha)
+        self.gamma = select_gamma(objective, gamma)
+
+        if (
+            objective in {"multiclass_focal", "multiclass_weighted"}
+            and num_class is None
+        ):
+            raise ValueError("num_class must be provided")
+
         super().__init__(
-            objective=_objective,
+            objective=self.__objective_select(
+                objective,
+                self.alpha,
+                self.gamma,
+                self.num_class if isinstance(self.num_class, int) else -1,
+            ),
             **kwargs,
         )
 
     def predict(self, *args, **kwargs) -> np.ndarray | spmatrix | list[spmatrix]:
+        """"""
         _predict = super().predict(*args, **kwargs)
         if (
             kwargs.get("raw_score", False)
@@ -54,78 +62,40 @@ class ImbalancedLGBMClassifier(LGBMClassifier):
         if _predict.ndim == 1:
             return expit(_predict)
 
-        class_index = np.argmax(_predict, axis=1)
+        return self._le.inverse_transform(np.argmax(_predict, axis=1))
 
-        return self._le.inverse_transform(class_index)
-
-    def __objective_select(self, objective_enum: Objective) -> _SklearnObjLike:
+    def __objective_select(
+        self,
+        objective: str,
+        alpha: float,
+        gamma: float,
+        num_class: int,
+    ) -> Callable:
         """Select objective function."""
-        if objective_enum in {
-            Objective.multiclass_focal,
-            Objective.multiclass_weighted,
-        } and not isinstance(self.num_class, int):
-            raise ValueError("num_class must be provided")
-
-        _objective_mapper: dict[Objective, _SklearnObjLike] = {
-            Objective.binary_focal: lambda y_true, y_pred: binary_focal_objective(
-                y_true=y_true, y_pred=y_pred, gamma=self.gamma
+        _objective_mapper: dict[str, Callable] = {
+            "binary_focal": lambda y_true, y_pred: binary_focal_objective(
+                y_true=y_true, y_pred=y_pred, gamma=gamma
             ),
-            Objective.binary_weighted: lambda y_true, y_pred: binary_weighted_objective(
-                y_true=y_true, y_pred=y_pred, alpha=self.alpha
+            "binary_weighted": lambda y_true, y_pred: binary_weighted_objective(
+                y_true=y_true, y_pred=y_pred, alpha=alpha
             ),
-            Objective.multiclass_focal: lambda y_true, y_pred: (
-                multiclass_focal_objective(
-                    y_true=y_true,
-                    y_pred=y_pred,
-                    gamma=self.gamma,
-                    num_class=self.num_class,
-                )
+            "multiclass_focal": lambda y_true, y_pred: multiclass_focal_objective(
+                y_true=y_true,
+                y_pred=y_pred,
+                gamma=gamma,
+                num_class=num_class,
             ),
-            Objective.multiclass_weighted: lambda y_true, y_pred: (
-                multiclass_weighted_objective(
-                    y_true=y_true,
-                    y_pred=y_pred,
-                    alpha=self.alpha,
-                    num_class=self.num_class,
-                )
+            "multiclass_weighted": lambda y_true, y_pred: multiclass_weighted_objective(
+                y_true=y_true,
+                y_pred=y_pred,
+                alpha=alpha,
+                num_class=num_class,
             ),
         }
-        return _objective_mapper[objective_enum]
+        return _objective_mapper[objective]
 
-    def __param_select(
-        self,
-        objective: Objective,
-        param: float | None,
-        valid_objectives: set[Objective],
-        default_value: float,
-        param_name: str,
-    ) -> None:
-        """General method to select appropriate parameter (alpha or gamma)."""
-        if objective not in valid_objectives:
-            setattr(self, param_name, None)
-            return
-        if param:
-            validate_positive_number(param)
-            setattr(self, param_name, param)
-            return
-        setattr(self, param_name, default_value)
-
-    def __alpha_select(self, objective: Objective, alpha: float | None) -> None:
-        """Select appropriate alpha."""
-        self.__param_select(
-            objective=objective,
-            param=alpha,
-            valid_objectives={Objective.binary_weighted, Objective.multiclass_weighted},
-            default_value=ALPHA_DEFAULT,
-            param_name="alpha",
-        )
-
-    def __gamma_select(self, objective: Objective, gamma: float | None) -> None:
-        """Select appropriate gamma."""
-        self.__param_select(
-            objective=objective,
-            param=gamma,
-            valid_objectives={Objective.binary_focal, Objective.multiclass_focal},
-            default_value=GAMMA_DEFAULT,
-            param_name="gamma",
-        )
+    def _process_params(self, stage: str) -> dict:
+        params = super()._process_params(stage)
+        params.pop("alpha", None)
+        params.pop("gamma", None)
+        return params
