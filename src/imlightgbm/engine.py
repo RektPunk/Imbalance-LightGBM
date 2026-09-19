@@ -5,7 +5,7 @@ import numpy as np
 from scipy.sparse import spmatrix
 from scipy.special import expit, softmax
 
-from imlightgbm.objective import set_params
+from imlightgbm.common import set_params
 
 
 class ImbalancedBooster(lgb.Booster):

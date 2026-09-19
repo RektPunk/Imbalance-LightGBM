@@ -1,7 +1,7 @@
 from collections.abc import Callable
 
 import numpy as np
-from lightgbm.sklearn import LGBMClassifier, _LGBM_ScikitMatrixLike
+from lightgbm.sklearn import LGBMClassifier
 from scipy.sparse import spmatrix
 from scipy.special import expit
 
